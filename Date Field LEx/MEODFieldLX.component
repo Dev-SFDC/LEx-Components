@@ -1,0 +1,60 @@
+<apex:component id="MEODFieldLX">
+
+    <apex:attribute name="fldLabel" type="String" description="Field Label" />
+    <apex:attribute name="fldValue" description="Field Value" type="String" />
+
+    <style>
+        .slds-scope .slds-dropdown {
+            max-width: 22rem !important;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="{!URLFOR($Resource.ALJS, '/3.1.0/jquery.aljs-all-with-moment.min.js')}"></script>
+    <script type="text/javascript">
+        var $j = jQuery.noConflict();
+        //Assigning SLDS Static Resource Path To A Variable To Use It With ALJS Initialization
+        var assetsLoc = '{!URLFOR($Asset.SLDS)}';
+        var eventDateValue = '';
+        //ALJS Initialization
+        $j.aljsInit({
+            assetsLocation: assetsLoc,
+            scoped: true
+        });
+
+        $j(document).ready(function() {
+
+            var initFldVal = '{!fldValue}';
+            var initVal = moment();
+            if (initFldVal) {
+                initVal = new Date(initFldVal);
+            }
+            //Initializing Datepicker
+            $j('[id="{!$Component.dtVal}"]').datepicker({
+                                        numYearsBefore: 10,
+                                        numYearsAfter: 10,
+                                        initDate: initVal, // Assign Date
+                                        format: 'MM/DD/YYYY', //the Date Format Of Datepicker Input Field
+                                        // onChange function to change the value once it is selected
+                                        onChange: function(datepicker) {
+                                            // Specify the format
+                                            eventDateValue = moment(datepicker.selectedFullDate._d).format('MM/DD/YYYY');
+                                            // To not fire change event whyle initialization
+                                            if (this.initDate.toString() != datepicker.selectedFullDate._d.toString()) {
+                                                $j('[id="{!$Component.dtVal}"]').change();
+                                            }
+                                        }
+            });
+        });
+    </script>
+    <div class="slds-form-element">
+        <apex:outputLabel value="{!fldLabel}" styleClass="slds-form-element__label" for="{!$Component.dtVal}" rendered="{!fldLabel != ''}" />
+        <div class="slds-form-element__control" style="width:200px;">
+            <div class="slds-input-has-icon slds-input-has-icon--right">
+                <svg aria-hidden="true" class="slds-input__icon slds-icon-text-default">
+                    <use xmlns:xlink="http://www.w3.org/1999/xlink"  xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#event')}"></use>
+                </svg>
+                <apex:inputText id="dtVal" value="{!fldValue}" styleClass="slds-input" label="{!fldLabel}" />
+            </div>
+        </div>
+    </div>
+</apex:component>

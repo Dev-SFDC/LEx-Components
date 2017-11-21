@@ -1,0 +1,96 @@
+<apex:component id="MEORFieldLX" controller="MEOInputLookupController" >
+
+    <apex:attribute name="currentRecordId" description="Selected Record Id" type="String" />
+    <apex:attribute name="currentRecordLabel" description="Selected Record Label/Name" type="String" />
+    <apex:attribute name="objName" description="sObject Name" type="String" required="true"/>
+    <apex:attribute name="searchFldName" description="Search Field Name" type="String" required="true"/>
+    <apex:attribute name="fldLabel" description="Field Label" type="String" />
+
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="{!URLFOR($Resource.ALJS, '/3.1.0/jquery.aljs-all-with-moment.min.js')}"></script>
+    <script type="text/javascript">
+        var $j = jQuery.noConflict();
+        //Assigning SLDS Static Resource Path To A Variable To Use It With ALJS Initialization
+        var assetsLoc = '{!URLFOR($Asset.SLDS)}';
+        var eventDateValue = '';
+        //ALJS Initialization
+        $j.aljsInit({
+            assetsLocation: assetsLoc,
+            scoped: true
+        });
+
+        $j(document).ready(function() {
+            var initFldId = '{!currentRecordId}';
+            var initFldLbl = '{!currentRecordLabel}';
+            var initVal = '';
+            if (initFldId != '') {
+                initVal = {};
+                initVal.id = initFldId;
+                initVal.label = initFldLbl;
+            }
+            var objName = '{!objName}';
+            var searchFldName = '{!searchFldName}';
+            var elem = $j('[id="{!$Component.refFld}"]');
+            if (objName && searchFldName && elem) {
+                //Initializing Lookup
+                elem.lookup({
+                    useImgTag: false,
+                    objectIconUrl: '/apexpages/slds/latest/assets/icons/standard-sprite/svg/symbols.svg#' + objName.toLowerCase(),
+                    objectIconClass: 'slds-icon-standard-' + objName.toLowerCase(),
+                    initialSelection: initVal,
+                    onChange: function(currentSelection, isAdd) {
+                                    if (isAdd) {
+                                        elem[0].value = currentSelection.id;
+                                    } else {
+                                        elem[0].value = '';
+                                    }
+                                    var initId = '';
+                                    var currId = '';
+                                    if (initVal && initVal.id) {
+                                        initId = initVal.id;
+                                    }
+                                    if (currentSelection && currentSelection.id) {
+                                        currId = currentSelection.id;
+                                    }
+                                    if (initId != currId) {
+                                        elem.change();
+                                    }
+                    },
+                    emptySearchTermQuery: function(callback) {
+                                                Visualforce.remoting.Manager.invokeAction (
+                                                    '{!$RemoteAction.MEOInputLookupController.getRecentItems}',
+                                                    [objName.toLowerCase(), searchFldName.toLowerCase()],
+                                                    function(result, event) {
+                                                        if (event.status) {
+                                                            callback(result);
+                                                        }
+                                                    }
+                                                );
+                    },
+                    filledSearchTermQuery: function(searchTerm, callback) {
+                                                Visualforce.remoting.Manager.invokeAction (
+                                                    '{!$RemoteAction.MEOInputLookupController.getRecentFilledItems}',
+                                                    [objName.toLowerCase(), searchFldName.toLowerCase(), searchTerm],
+                                                    function(result, event) {
+                                                        if (event.status) {
+                                                            callback(result);
+                                                        }
+                                                    }
+                                                );
+                    }
+                });
+            }
+        });
+    </script>
+
+    <div class="slds-form-element slds-lookup slds-size--1-of-1" data-select="single" data-scope="single">
+        <apex:outputLabel value="{!fldLabel}" styleClass="slds-form-element__label" for="{!$Component.refFld}" rendered="{!fldLabel != ''}" />
+        <div class="slds-from-element__control slds-input-has-icon slds-input-has-icon--right">
+            <svg aria-hidden="true" class="slds-input__icon slds-icon-text-default">
+                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($ASSET.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#search')}"></use>
+            </svg>
+            <apex:inputText id="refFld" value="{!currentRecordId}" styleClass="slds-lookup__search-input slds-input" title="{!fldLabel}" />
+        </div>
+    </div>
+
+</apex:component>
